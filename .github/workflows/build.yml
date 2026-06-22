@@ -1,0 +1,30 @@
+name: Build APK FINAL FIX
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    container:
+      image: kivy/buildozer:latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Force non-interactive mode
+      run: |
+        export PIP_NO_INPUT=1
+        export DEBIAN_FRONTEND=noninteractive
+
+    - name: Build APK (NO PROMPT FIX)
+      run: |
+        buildozer -v android debug --allow-root
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: APK
+        path: "**/*.apk"
