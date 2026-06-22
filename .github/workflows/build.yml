@@ -1,0 +1,54 @@
+name: Build APK Stable
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Install system deps
+      run: |
+        sudo apt update
+        sudo apt install -y python3-pip git zip unzip openjdk-17-jdk wget
+
+    - name: Install build tools
+      run: |
+        pip install --upgrade pip
+        pip install cython buildozer
+
+    # 🔥 ANDROID SDK MANUAL FIX (GERÇEK ÇÖZÜM)
+    - name: Install Android SDK (proper)
+      run: |
+        mkdir -p $HOME/android-sdk
+        cd $HOME/android-sdk
+
+        wget https://dl.google.com/android/repository/commandlinetools-linux.zip
+        unzip commandlinetools-linux.zip
+
+        mkdir -p cmdline-tools/latest
+        mv cmdline-tools/* cmdline-tools/latest/ || true
+
+        export ANDROID_SDK_ROOT=$HOME/android-sdk
+        export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin
+
+        yes | sdkmanager --licenses || true
+
+        sdkmanager "platform-tools"
+        sdkmanager "platforms;android-33"
+        sdkmanager "build-tools;33.0.2"
+
+    - name: Build APK
+      run: |
+        buildozer -v android debug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: FootballAI-APK
+        path: "**/*.apk"
